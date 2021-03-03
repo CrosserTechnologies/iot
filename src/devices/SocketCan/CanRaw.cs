@@ -133,6 +133,38 @@ namespace Iot.Device.SocketCan
             Interop.SetCanRawSocketOption<Interop.CanFilter>(_handle, Interop.CanSocketOption.CAN_RAW_FILTER, filters);
         }
 
+        /// <summary>
+        /// Set filter on the bus to read only from specified recipient.
+        /// </summary>
+        /// <param name="id">Recipient identifier</param>
+        /// <param name="mask">Mask bits to use in filter</param>
+        public void Filter(uint id, uint mask)
+        {
+            Filter(new CanIdFilter(id, mask));
+        }
+
+        /// <summary>
+        /// Set filter(s) on the bus to read only from recipient(s) matching filters.
+        /// </summary>
+        /// <param name="filters">Recipient id filters</param>
+        public void Filter(params CanIdFilter[] filters)
+        {
+            if (filters == null)
+            {
+                throw new ArgumentNullException(nameof(filters));
+            }
+
+            Span<Interop.CanFilter> canFilters = stackalloc Interop.CanFilter[filters.Length];
+
+            for (int i = 0; i < canFilters.Length; i++)
+            {
+                canFilters[i].can_id = filters[i].Id;
+                canFilters[i].can_mask = filters[i].Mask;
+            }
+
+            Interop.SetCanRawSocketOption<Interop.CanFilter>(_handle, Interop.CanSocketOption.CAN_RAW_FILTER, canFilters);
+        }
+
         private static bool IsEff(uint address)
         {
             // has explicit flag or address does not fit in SFF addressing mode
